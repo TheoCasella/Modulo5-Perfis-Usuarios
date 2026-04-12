@@ -16,16 +16,6 @@ def selecionar_perfil():
     else:
         return "Erro, cargo inválido"
 
-if __name__ == "__main__":
-    usuario = selecionar_perfil()
-    if isinstance(usuario, str):
-        print(usuario)
-    else:
-        print("\n*** MVP Perfis de Usuários ***")
-        print(f"Usuário: {usuario.nome}")
-        print(f"Cargo: {usuario.cargo}")
-        print(f"Interesses: {', '.join(usuario.interesses_principais)}")
-        print(f"Ação da IA: {usuario.get_foco_ia()}")
 
 def exportar_perfil(usuario):
     """Gera o arquivo que será lido pelo módulo de IA"""
@@ -47,9 +37,11 @@ if __name__ == "__main__":
     if isinstance(usuario, str):
         print(usuario)
     else:
-        # Exibe no console
         print("\n*** MVP Perfis de Usuários ***")
-        # ... seus prints atuais ...
+        print(f"Usuário: {usuario.nome}")
+        print(f"Cargo: {usuario.cargo}")
+        print(f"Interesses: {', '.join(usuario.interesses_principais)}")
+        print(f"Ação da IA: {usuario.get_foco_ia()}")
 
         # GERA O CONTRATO (A conexão entre os repositórios)
         exportar_perfil(usuario)
