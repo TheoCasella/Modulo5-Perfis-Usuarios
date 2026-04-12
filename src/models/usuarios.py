@@ -18,3 +18,15 @@ class TechLead(PersonaTecnica):
     #Serve para a IA "entender" qual usuário é
     def get_foco_ia(self):
         return "Gerar visões de alto nível e dependências de infraestrutura"
+
+# Ficha específica para Desenvolvedor
+class Desenvolvedor(PersonaTecnica):
+    def __init__(self, nome):
+        super().__init__(
+            nome = nome,
+            cargo = "Desenvolvedor",
+            interesses_principais= ["Lógica de Código", "Fluxo de Funcionamento"]
+        )
+
+    def get_foco_ia(self):
+        return "Gerar visões de lógica de código e fluxo de funcionamento"
