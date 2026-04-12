@@ -30,3 +30,15 @@ class Desenvolvedor(PersonaTecnica):
 
     def get_foco_ia(self):
         return "Gerar visões de lógica de código e fluxo de funcionamento"
+
+# Ficha específica para Product Manager (PM)
+class ProductManager(PersonaTecnica):
+    def __init__(self, nome):
+        super().__init__(
+            nome = nome,
+            cargo = "Product Manager (PM)",
+            interesses_principais= ["Roadmap do Produto", "Valor de Negócio", "Métricas de Sucesso", "Status da Sprint"]
+        )
+
+    def get_foco_ia(self):
+        return "Gerar resumos executivos, progresso de metas e visões de negócio"
