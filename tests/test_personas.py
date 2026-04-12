@@ -8,17 +8,11 @@ def test_criacao_tech_lead():
     assert "Arquitetura de Nuvem" in lider.interesses_principais
     print("\nTeste de criação de Tech Lead: PASSOU")
 
-if __name__ == "__main__":
-    test_criacao_tech_lead()
-
 def test_criacao_desenvolvedor():
     lider = Desenvolvedor("Ana")
     assert lider.cargo == "Desenvolvedor"
     assert "Lógica de Código" in lider.interesses_principais
     print("\nTeste de criação de Desenvolvedor: PASSOU")
-
-if __name__ == "__main__":
-    test_criacao_desenvolvedor()
 
 def test_criacao_product_manager():
     lider = ProductManager("Artur")
@@ -27,4 +21,6 @@ def test_criacao_product_manager():
     print("\nTeste de criação de PM: PASSOU")
 
 if __name__ == "__main__":
+    test_criacao_tech_lead()
+    test_criacao_desenvolvedor()
     test_criacao_product_manager()
