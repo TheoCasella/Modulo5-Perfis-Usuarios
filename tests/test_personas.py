@@ -1,4 +1,4 @@
-from src.models.usuarios import TechLead, Desenvolvedor, ProductManager
+from src.models.usuarios.usuarios import TechLead, Desenvolvedor, ProductManager
 
 
 # Testar a criação do tech lead
