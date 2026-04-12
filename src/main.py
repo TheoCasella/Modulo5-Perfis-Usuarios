@@ -1,16 +1,17 @@
+import json
 from src.models.usuarios.tech_lead import TechLead
 from src.models.usuarios.desenvolvedor import Desenvolvedor
 from src.models.usuarios.product_manager import ProductManager
 
 def selecionar_perfil():
     nome = input("\nQual o seu nome? ")
-    cargo = input("\nQual seu cargo? ")
+    cargo = input("\nQual seu cargo? (Tech Lead, Desenvolvedor, Product Manager) ")
 
-    if cargo == "TechLead":
+    if cargo == "Tech Lead":
         return TechLead(nome)
     elif cargo == "Desenvolvedor":
         return Desenvolvedor(nome)
-    elif cargo == "ProductManager":
+    elif cargo == "Product Manager":
         return ProductManager(nome)
     else:
         return "Erro, cargo inválido"
@@ -25,3 +26,30 @@ if __name__ == "__main__":
         print(f"Cargo: {usuario.cargo}")
         print(f"Interesses: {', '.join(usuario.interesses_principais)}")
         print(f"Ação da IA: {usuario.get_foco_ia()}")
+
+def exportar_perfil(usuario):
+    """Gera o arquivo que será lido pelo módulo de IA"""
+    contrato = {
+        "usuario_nome": usuario.nome,
+        "usuario_cargo": usuario.cargo,
+        "diretriz_ia": usuario.get_foco_ia()
+    }
+
+    with open("contrato_perfil.json", "w", encoding="utf-8") as f:
+        json.dump(contrato, f, indent=4, ensure_ascii=False)
+    print("\n[CONTRATO GERADO] O arquivo 'contrato_perfil.json' está pronto para o Módulo de IA.")
+
+
+# ... mantenha sua função selecionar_perfil() igual ...
+
+if __name__ == "__main__":
+    usuario = selecionar_perfil()
+    if isinstance(usuario, str):
+        print(usuario)
+    else:
+        # Exibe no console
+        print("\n*** MVP Perfis de Usuários ***")
+        # ... seus prints atuais ...
+
+        # GERA O CONTRATO (A conexão entre os repositórios)
+        exportar_perfil(usuario)
