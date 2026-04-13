@@ -1,5 +1,5 @@
 {
-    "usuario_nome": "Theo",
-    "usuario_cargo": "Tech Lead",
-    "diretriz_ia": "\n[SIMULAÇÃO IA - VISÃO DE ARQUITETURA]\nFOCO: Infraestrutura e Dependências\n-------------------------------------------\n1. Cloud Service (Azure App Service)\n2. Database (PostgreSQL)\n3. Cache System (Redis)\n-------------------------------------------\nStatus: Pronto para provisionamento via Terraform.\n"
+    "usuario_nome": "Enzo",
+    "usuario_cargo": "Product Manager (PM)",
+    "diretriz_ia": "\n[SIMULAÇÃO IA - VISÃO DE NEGÓCIO]\nFOCO: Roadmap e Entrega de Valor\n-------------------------------------------\n- Feature: Gerenciamento de Personas\n- Prazo: Entrega MVP P5 (12/04)\n- Valor: Redução de 40% no tempo de documentação.\n-------------------------------------------\nStatus: Alinhado com as metas da Sprint.\n"
 }
