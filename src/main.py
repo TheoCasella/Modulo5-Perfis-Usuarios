@@ -1,4 +1,5 @@
 import json
+import os
 from src.models.usuarios.tech_lead import TechLead
 from src.models.usuarios.desenvolvedor import Desenvolvedor
 from src.models.usuarios.product_manager import ProductManager
@@ -19,18 +20,22 @@ def selecionar_perfil():
 
 def exportar_perfil(usuario):
     """Gera o arquivo que será lido pelo módulo de IA"""
+
+    if not os.path.exists("./data"):
+        os.makedirs("./data")
+        print("[SISTEMA] Pasta 'data' criada com sucesso!")
+    caminho_arquivo = "data/contrato_perfil.json"
+
     contrato = {
         "usuario_nome": usuario.nome,
         "usuario_cargo": usuario.cargo,
         "diretriz_ia": usuario.get_foco_ia()
     }
 
-    with open("contrato_perfil.json", "w", encoding="utf-8") as f:
+    with open(caminho_arquivo, "w", encoding="utf-8") as f:
         json.dump(contrato, f, indent=4, ensure_ascii=False)
     print("\n[CONTRATO GERADO] O arquivo 'contrato_perfil.json' está pronto para o Módulo de IA.")
 
-
-# ... mantenha sua função selecionar_perfil() igual ...
 
 if __name__ == "__main__":
     usuario = selecionar_perfil()
