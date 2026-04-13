@@ -1,5 +1,5 @@
 {
-    "usuario_nome": "Rafael",
-    "usuario_cargo": "Product Manager (PM)",
-    "diretriz_ia": "\n[SIMULAÇÃO IA - VISÃO DE NEGÓCIO]\nFOCO: Roadmap e Entrega de Valor\n-------------------------------------------\n- Feature: Gerenciamento de Personas\n- Prazo: Entrega MVP P5 (12/04)\n- Valor: Redução de 40% no tempo de documentação.\n-------------------------------------------\nStatus: Alinhado com as metas da Sprint.\n"
+    "usuario_nome": "Bruno",
+    "usuario_cargo": "Desenvolvedor",
+    "diretriz_ia": "\n[SIMULAÇÃO IA - FLUXO DE LÓGICA]\nFOCO: Algoritmos e Implementação\n-------------------------------------------\n- main.py -> chama selecionar_perfil()\n- usuarios.py -> instanciam classes herdadas\n- fluxo -> tratamento de erros de input\n-------------------------------------------\nStatus: Cobertura de testes em 100%.\n"
 }
