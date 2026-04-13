@@ -1,4 +1,10 @@
 # templates_ia.py
+'''
+Por enquanto, este resumo está pre definido para não perder tempo do MVP
+No futuro, a IA que vai fazer estes resumos e salvar em um arquivo específico
+Para criar esta IA, devemos fazer no repositóiro Modulo5 Analise Codigo (Para pegar todas as informações de acordo com o usuário - Tech Lead, Dev ou PM)
+Por fim, após juntar esta análise, o Modulo5 Gerador Documentacao vai usar esta análise para fazer uma documentação visual
+'''
 
 resumo_tech_lead = """
 [SIMULAÇÃO IA - VISÃO DE ARQUITETURA]
