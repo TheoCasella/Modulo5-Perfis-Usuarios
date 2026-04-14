@@ -1,5 +1,5 @@
 {
     "usuario_nome": "Theo",
-    "usuario_cargo": "Desenvolvedor",
-    "diretriz_ia": "\n[SIMULAÇÃO IA - FLUXO DE LÓGICA]\nFOCO: Algoritmos e Implementação\n-------------------------------------------\n- main.py -> chama selecionar_perfil()\n- usuarios.py -> instanciam classes herdadas\n- fluxo -> tratamento de erros de input\n-------------------------------------------\nStatus: Cobertura de testes em 100%.\n"
+    "usuario_cargo": "Tech Lead",
+    "diretriz_ia": "\n[SIMULAÇÃO IA - VISÃO DE ARQUITETURA]\nFOCO: Infraestrutura e Dependências\n-------------------------------------------\n1. Cloud Service (Azure App Service)\n2. Database (PostgreSQL)\n3. Cache System (Redis)\n-------------------------------------------\nStatus: Pronto para provisionamento via Terraform.\n"
 }
