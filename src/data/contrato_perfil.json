@@ -1,5 +1,5 @@
 {
-    "usuario_nome": "Ronaldo",
-    "usuario_cargo": "Desenvolvedor",
-    "diretriz_ia": "\n[SIMULAÇÃO IA - FLUXO DE LÓGICA]\nFOCO: Algoritmos e Implementação\n-------------------------------------------\n- main.py -> chama selecionar_perfil()\n- usuarios.py -> instanciam classes herdadas\n- fluxo -> tratamento de erros de input\n-------------------------------------------\nStatus: Cobertura de testes em 100%.\n"
+    "usuario_nome": "Rafael",
+    "usuario_cargo": "Tech Lead",
+    "diretriz_ia": "Focar em Tech Lead e integração Cloud."
 }
