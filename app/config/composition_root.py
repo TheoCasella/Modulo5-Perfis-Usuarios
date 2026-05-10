@@ -15,9 +15,15 @@ from app.adapters.driven.persistence.repositorio_auditoria_sqlite import (
 from app.adapters.driven.persistence.repositorio_ownership_sqlite import (
     RepositorioOwnershipSQLite,
 )
+from app.adapters.driven.persistence.repositorio_templates_aprovacao_sqlite import (
+    RepositorioTemplatesAprovacaoSQLite,
+)
 from app.application.services.auditoria_service_impl import AuditoriaServiceImpl
 from app.application.services.ownership_service_impl import OwnershipServiceImpl
 from app.application.services.saude_service_impl import SaudeServiceImpl
+from app.application.services.template_aprovacao_service_impl import (
+    TemplateAprovacaoServiceImpl,
+)
 from app.config import settings
 
 
@@ -57,6 +63,11 @@ class CompositionRoot:
 
         self.repositorio_ownership = RepositorioOwnershipSQLite(settings.OWNERSHIP_SQLITE_PATH)
 
+        # --- Templates de aprovacao (PU-04) ---
+        self.repositorio_templates_aprovacao = RepositorioTemplatesAprovacaoSQLite(
+            settings.TEMPLATES_APROVACAO_SQLITE_PATH
+        )
+
         # --- Services ---
         self.auditoria_service = AuditoriaServiceImpl(self.repositorio_auditoria)
         self.saude_service = SaudeServiceImpl(self.repositorio_auditoria)
@@ -64,6 +75,10 @@ class CompositionRoot:
             provedor_historico=self.provedor_historico,
             repositorio=self.repositorio_ownership,
             cache_ttl_segundos=settings.OWNERSHIP_CACHE_TTL_SEGUNDOS,
+        )
+        self.template_aprovacao_service = TemplateAprovacaoServiceImpl(
+            repositorio=self.repositorio_templates_aprovacao,
+            auditoria=self.auditoria_service,
         )
 
     def get_auditoria_service(self) -> AuditoriaServiceImpl:
@@ -74,6 +89,9 @@ class CompositionRoot:
 
     def get_ownership_service(self) -> OwnershipServiceImpl:
         return self.ownership_service
+
+    def get_template_aprovacao_service(self) -> TemplateAprovacaoServiceImpl:
+        return self.template_aprovacao_service
 
 
 _singleton: CompositionRoot | None = None

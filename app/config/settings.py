@@ -18,5 +18,10 @@ GITHUB_TIMEOUT_SEGUNDOS = float(os.getenv("GITHUB_TIMEOUT_SEGUNDOS", "5.0"))
 # "github" = chamada real; "fake" = adapter local (dev offline e testes).
 PROVEDOR_HISTORICO_COMMITS = os.getenv("PROVEDOR_HISTORICO_COMMITS", "github")
 
+# Persistencia de templates de aprovacao (US PU-04).
+TEMPLATES_APROVACAO_SQLITE_PATH = os.getenv(
+    "TEMPLATES_APROVACAO_SQLITE_PATH", "perfis_templates.db"
+)
+
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

@@ -1,7 +1,12 @@
 import uvicorn
 from fastapi import FastAPI
 
-from app.adapters.driving.http import auditoria_routes, ownership_routes, saude_routes
+from app.adapters.driving.http import (
+    auditoria_routes,
+    ownership_routes,
+    saude_routes,
+    template_aprovacao_routes,
+)
 
 
 app = FastAPI(
@@ -13,6 +18,7 @@ app = FastAPI(
 app.include_router(saude_routes.router)
 app.include_router(auditoria_routes.router)
 app.include_router(ownership_routes.router)
+app.include_router(template_aprovacao_routes.router)
 
 
 @app.get("/")
