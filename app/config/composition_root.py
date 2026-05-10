@@ -18,6 +18,13 @@ from app.adapters.driven.persistence.repositorio_ownership_sqlite import (
 from app.adapters.driven.persistence.repositorio_templates_aprovacao_sqlite import (
     RepositorioTemplatesAprovacaoSQLite,
 )
+from app.adapters.driven.persistence.repositorio_documentos_sqlite import (
+    RepositorioDocumentosSQLite,
+)
+from app.adapters.driven.persistence.repositorio_aprovacoes_sqlite import (
+    RepositorioAprovacoesSQLite,
+)
+from app.application.services.aprovacao_service_impl import AprovacaoServiceImpl
 from app.application.services.auditoria_service_impl import AuditoriaServiceImpl
 from app.application.services.ownership_service_impl import OwnershipServiceImpl
 from app.application.services.saude_service_impl import SaudeServiceImpl
@@ -68,6 +75,10 @@ class CompositionRoot:
             settings.TEMPLATES_APROVACAO_SQLITE_PATH
         )
 
+        # --- Aprovacao de documentos (PU-05) ---
+        self.repositorio_documentos = RepositorioDocumentosSQLite(settings.APROVACOES_SQLITE_PATH)
+        self.repositorio_aprovacoes = RepositorioAprovacoesSQLite(settings.APROVACOES_SQLITE_PATH)
+
         # --- Services ---
         self.auditoria_service = AuditoriaServiceImpl(self.repositorio_auditoria)
         self.saude_service = SaudeServiceImpl(self.repositorio_auditoria)
@@ -78,6 +89,12 @@ class CompositionRoot:
         )
         self.template_aprovacao_service = TemplateAprovacaoServiceImpl(
             repositorio=self.repositorio_templates_aprovacao,
+            auditoria=self.auditoria_service,
+        )
+        self.aprovacao_service = AprovacaoServiceImpl(
+            repositorio_documentos=self.repositorio_documentos,
+            repositorio_aprovacoes=self.repositorio_aprovacoes,
+            repositorio_templates=self.repositorio_templates_aprovacao,
             auditoria=self.auditoria_service,
         )
 
@@ -92,6 +109,9 @@ class CompositionRoot:
 
     def get_template_aprovacao_service(self) -> TemplateAprovacaoServiceImpl:
         return self.template_aprovacao_service
+
+    def get_aprovacao_service(self) -> AprovacaoServiceImpl:
+        return self.aprovacao_service
 
 
 _singleton: CompositionRoot | None = None
