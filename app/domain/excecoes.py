@@ -74,3 +74,18 @@ class SubscricaoDuplicadaError(ValueError):
 class NotificacaoNaoEncontradaError(LookupError):
     """Notificacao com esse id nao existe (ou nao pertence ao usuario)."""
     pass
+
+
+class SugestaoOwnershipInvalidaError(ValueError):
+    """Tentativa de sugerir/aprovar ownership com dados invalidos."""
+    pass
+
+
+class SemCandidatoOwnerError(LookupError):
+    """Nao ha sinal historico suficiente para sugerir owner do documento."""
+    pass
+
+
+class OwnershipJaAtribuidoError(RuntimeError):
+    """Documento ja tem owner atribuido — use reatribuir explicitamente."""
+    pass

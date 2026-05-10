@@ -37,5 +37,10 @@ OWNERSHIP_MAX_PAGINAS_GITHUB = int(os.getenv("OWNERSHIP_MAX_PAGINAS_GITHUB", "5"
 # Janela temporal opcional: se >0, considera apenas commits dos ultimos N dias.
 OWNERSHIP_JANELA_DIAS = int(os.getenv("OWNERSHIP_JANELA_DIAS", "0"))
 
+# Persistencia de ownership de documentos (US PU-03).
+OWNERSHIP_DOCUMENTOS_SQLITE_PATH = os.getenv(
+    "OWNERSHIP_DOCUMENTOS_SQLITE_PATH", "perfis_ownership_documentos.db"
+)
+
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
