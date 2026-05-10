@@ -34,3 +34,28 @@ class TemplateNaoEncontradoError(LookupError):
 class TemplateDuplicadoError(ValueError):
     """Ja existe template ativo para esse projeto+tipo_documento."""
     pass
+
+
+class DocumentoNaoEncontradoError(LookupError):
+    """Documento submetido nao existe."""
+    pass
+
+
+class DocumentoDuplicadoError(ValueError):
+    """Ja existe um documento submetido com esse id."""
+    pass
+
+
+class DocumentoFinalizadoError(RuntimeError):
+    """Documento ja esta em estado terminal (APROVADO, REJEITADO, CANCELADO)."""
+    pass
+
+
+class AprovacaoForaDeOrdemError(RuntimeError):
+    """Tentativa de aprovar/rejeitar fora da ordem (fluxo SEQUENCIAL) ou com papel nao pendente."""
+    pass
+
+
+class AprovacaoDuplicadaError(RuntimeError):
+    """Mesmo papel ja decidiu nesse documento."""
+    pass
