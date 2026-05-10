@@ -26,5 +26,8 @@ TEMPLATES_APROVACAO_SQLITE_PATH = os.getenv(
 # Persistencia de documentos em aprovacao + decisoes (US PU-05).
 APROVACOES_SQLITE_PATH = os.getenv("APROVACOES_SQLITE_PATH", "perfis_aprovacoes.db")
 
+# Persistencia de subscricoes e notificacoes (US PU-07).
+NOTIFICACOES_SQLITE_PATH = os.getenv("NOTIFICACOES_SQLITE_PATH", "perfis_notificacoes.db")
+
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

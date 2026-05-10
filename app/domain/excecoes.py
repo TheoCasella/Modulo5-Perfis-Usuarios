@@ -59,3 +59,18 @@ class AprovacaoForaDeOrdemError(RuntimeError):
 class AprovacaoDuplicadaError(RuntimeError):
     """Mesmo papel ja decidiu nesse documento."""
     pass
+
+
+class NotificacaoInvalidaError(ValueError):
+    """Tentativa de criar notificacao/subscricao com campos faltando ou invalidos."""
+    pass
+
+
+class SubscricaoDuplicadaError(ValueError):
+    """Usuario ja segue esse documento."""
+    pass
+
+
+class NotificacaoNaoEncontradaError(LookupError):
+    """Notificacao com esse id nao existe (ou nao pertence ao usuario)."""
+    pass
