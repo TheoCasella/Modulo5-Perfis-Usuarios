@@ -24,8 +24,12 @@ from app.adapters.driven.persistence.repositorio_documentos_sqlite import (
 from app.adapters.driven.persistence.repositorio_aprovacoes_sqlite import (
     RepositorioAprovacoesSQLite,
 )
+from app.adapters.driven.persistence.repositorio_notificacoes_sqlite import (
+    RepositorioNotificacoesSQLite,
+)
 from app.application.services.aprovacao_service_impl import AprovacaoServiceImpl
 from app.application.services.auditoria_service_impl import AuditoriaServiceImpl
+from app.application.services.notificacao_service_impl import NotificacaoServiceImpl
 from app.application.services.ownership_service_impl import OwnershipServiceImpl
 from app.application.services.saude_service_impl import SaudeServiceImpl
 from app.application.services.template_aprovacao_service_impl import (
@@ -79,6 +83,11 @@ class CompositionRoot:
         self.repositorio_documentos = RepositorioDocumentosSQLite(settings.APROVACOES_SQLITE_PATH)
         self.repositorio_aprovacoes = RepositorioAprovacoesSQLite(settings.APROVACOES_SQLITE_PATH)
 
+        # --- Notificacoes (PU-07) ---
+        self.repositorio_notificacoes = RepositorioNotificacoesSQLite(
+            settings.NOTIFICACOES_SQLITE_PATH
+        )
+
         # --- Services ---
         self.auditoria_service = AuditoriaServiceImpl(self.repositorio_auditoria)
         self.saude_service = SaudeServiceImpl(self.repositorio_auditoria)
@@ -91,11 +100,14 @@ class CompositionRoot:
             repositorio=self.repositorio_templates_aprovacao,
             auditoria=self.auditoria_service,
         )
+        self.notificacao_service = NotificacaoServiceImpl(self.repositorio_notificacoes)
+        # AprovacaoService recebe NotificacaoService — eventos viram notificacoes para os seguidores.
         self.aprovacao_service = AprovacaoServiceImpl(
             repositorio_documentos=self.repositorio_documentos,
             repositorio_aprovacoes=self.repositorio_aprovacoes,
             repositorio_templates=self.repositorio_templates_aprovacao,
             auditoria=self.auditoria_service,
+            notificacao_service=self.notificacao_service,
         )
 
     def get_auditoria_service(self) -> AuditoriaServiceImpl:
@@ -112,6 +124,9 @@ class CompositionRoot:
 
     def get_aprovacao_service(self) -> AprovacaoServiceImpl:
         return self.aprovacao_service
+
+    def get_notificacao_service(self) -> NotificacaoServiceImpl:
+        return self.notificacao_service
 
 
 _singleton: CompositionRoot | None = None
