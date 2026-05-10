@@ -1,10 +1,6 @@
-# Implementacao do OwnershipService com padrao de resiliencia (US PU-09).
-# Pipeline:
-#   1. Cache recente (idade <= TTL) -> devolve direto, marcado como "cache_recente"
-#   2. Tenta GitHub
-#      - sucesso -> persiste e devolve "github_vivo"
-#      - falha   -> log + tenta cache antigo -> devolve "fallback_cache" com aviso amigavel
-#   3. Sem cache + GitHub fora -> OwnershipNaoEncontradoError com mensagem amigavel
+# Implementacao do OwnershipService.
+# US PU-09: padrao de resiliencia (cache -> github -> fallback).
+# US PU-02: refresh em lote + registrar_modulo para o job diario.
 
 import logging
 from datetime import datetime, timezone
@@ -12,7 +8,9 @@ from typing import List, Optional
 
 from app.application.ports.driven.provedor_historico_commits import ProvedorHistoricoCommits
 from app.application.ports.driven.repositorio_ownership import RepositorioOwnership
-from app.application.ports.driving.ownership_service import OwnershipService, RespostaOwnership
+from app.application.ports.driving.ownership_service import (
+    OwnershipService, RespostaOwnership, ResultadoRefresh,
+)
 from app.domain.entidades.ownership import Ownership
 from app.domain.excecoes import GitHubIndisponivelError, OwnershipNaoEncontradoError
 
@@ -34,8 +32,6 @@ class OwnershipServiceImpl(OwnershipService):
 
     def obter_owner(self, repositorio: str, modulo: str) -> RespostaOwnership:
         cache = self._repositorio.obter(repositorio, modulo)
-        # Comparacao estrita: TTL=0 significa "sempre consultar fonte fresca",
-        # nao "qualquer cache vale".
         if cache is not None and cache.idade_segundos() < self._ttl:
             return RespostaOwnership(ownership=cache, origem="cache_recente")
 
@@ -58,11 +54,75 @@ class OwnershipServiceImpl(OwnershipService):
                 f"Por favor tente novamente em alguns minutos."
             ) from e
         except OwnershipNaoEncontradoError:
-            # Provedor reconheceu que o caminho nao tem commits — propaga sem fallback.
             raise
 
     def listar_owners_conhecidos(self, repositorio: Optional[str] = None) -> List[Ownership]:
         return self._repositorio.listar(repositorio)
+
+    def registrar_modulo(self, repositorio: str, modulo: str) -> Ownership:
+        existente = self._repositorio.obter(repositorio, modulo)
+        if existente is not None:
+            return existente
+        try:
+            fresco = self._provedor.identificar_owner(repositorio, modulo)
+            self._repositorio.salvar(fresco)
+            return fresco
+        except (GitHubIndisponivelError, OwnershipNaoEncontradoError) as e:
+            placeholder = Ownership(
+                repositorio=repositorio, modulo=modulo,
+                owner_id="(desconhecido)", confianca=0.0, total_commits=0,
+            )
+            self._repositorio.salvar(placeholder)
+            _logger.info(
+                "Modulo %s/%s registrado como placeholder (consulta inicial falhou: %s)",
+                repositorio, modulo, e,
+            )
+            return placeholder
+
+    def refrescar_todos(self) -> ResultadoRefresh:
+        inicio = datetime.now(timezone.utc)
+        conhecidos = self._repositorio.listar()
+
+        refrescados = 0
+        sem_mudanca = 0
+        falhas = 0
+        erros: List[str] = []
+
+        for atual in conhecidos:
+            try:
+                novo = self._provedor.identificar_owner(atual.repositorio, atual.modulo)
+            except OwnershipNaoEncontradoError:
+                sem_mudanca += 1
+                continue
+            except GitHubIndisponivelError as e:
+                falhas += 1
+                erros.append(f"{atual.repositorio}/{atual.modulo}: {e}")
+                continue
+
+            if (
+                novo.owner_id == atual.owner_id
+                and novo.total_commits == atual.total_commits
+                and abs(novo.confianca - atual.confianca) < 1e-6
+            ):
+                sem_mudanca += 1
+                continue
+
+            self._repositorio.salvar(novo)
+            refrescados += 1
+
+        fim = datetime.now(timezone.utc)
+        resultado = ResultadoRefresh(
+            inicio=inicio, fim=fim,
+            total_avaliados=len(conhecidos),
+            refrescados=refrescados, sem_mudanca=sem_mudanca,
+            falhas=falhas, erros=tuple(erros[:20]),  # limita pra nao explodir log
+        )
+        _logger.info(
+            "Refresh diario concluido: %d avaliados, %d refrescados, %d sem mudanca, %d falhas",
+            resultado.total_avaliados, resultado.refrescados,
+            resultado.sem_mudanca, resultado.falhas,
+        )
+        return resultado
 
     def _aviso_amigavel(self, cache: Ownership, motivo: str) -> str:
         idade_min = cache.idade_segundos() // 60
