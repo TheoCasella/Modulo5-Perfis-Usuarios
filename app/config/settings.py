@@ -29,5 +29,13 @@ APROVACOES_SQLITE_PATH = os.getenv("APROVACOES_SQLITE_PATH", "perfis_aprovacoes.
 # Persistencia de subscricoes e notificacoes (US PU-07).
 NOTIFICACOES_SQLITE_PATH = os.getenv("NOTIFICACOES_SQLITE_PATH", "perfis_notificacoes.db")
 
+# Job diario de refresh de ownership (US PU-02).
+OWNERSHIP_SCHEDULER_HABILITADO = os.getenv("OWNERSHIP_SCHEDULER_HABILITADO", "true").lower() == "true"
+OWNERSHIP_REFRESH_INTERVALO_HORAS = int(os.getenv("OWNERSHIP_REFRESH_INTERVALO_HORAS", "24"))
+# Quantas paginas no maximo varrer no GitHub commits API (cada uma tem ate 100 commits).
+OWNERSHIP_MAX_PAGINAS_GITHUB = int(os.getenv("OWNERSHIP_MAX_PAGINAS_GITHUB", "5"))
+# Janela temporal opcional: se >0, considera apenas commits dos ultimos N dias.
+OWNERSHIP_JANELA_DIAS = int(os.getenv("OWNERSHIP_JANELA_DIAS", "0"))
+
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
