@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 
@@ -9,12 +11,25 @@ from app.adapters.driving.http import (
     saude_routes,
     template_aprovacao_routes,
 )
+from app.config.composition_root import get_root
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Liga jobs em background no startup (PU-02 scheduler diario).
+    root = get_root()
+    root.iniciar_jobs_em_background()
+    try:
+        yield
+    finally:
+        root.parar_jobs_em_background()
 
 
 app = FastAPI(
     title="Perfis de Usuarios",
     description="Servico de papeis, ownership, aprovacoes, auditoria e notificacoes do Modulo 5.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.include_router(saude_routes.router)

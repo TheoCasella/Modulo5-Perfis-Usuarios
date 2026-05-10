@@ -27,6 +27,7 @@ from app.adapters.driven.persistence.repositorio_aprovacoes_sqlite import (
 from app.adapters.driven.persistence.repositorio_notificacoes_sqlite import (
     RepositorioNotificacoesSQLite,
 )
+from app.adapters.driven.scheduler.scheduler_diario import SchedulerDiario
 from app.application.services.aprovacao_service_impl import AprovacaoServiceImpl
 from app.application.services.auditoria_service_impl import AuditoriaServiceImpl
 from app.application.services.notificacao_service_impl import NotificacaoServiceImpl
@@ -59,13 +60,15 @@ class CompositionRoot:
         else:
             raise ValueError(f"AUDITORIA_BACKEND desconhecido: {backend_auditoria}")
 
-        # --- Ownership (PU-09) ---
+        # --- Ownership (PU-09 + PU-02) ---
         provedor_tipo = (settings.PROVEDOR_HISTORICO_COMMITS or "github").lower()
         if provedor_tipo == "github":
             self.provedor_historico = ClienteGitHubCommits(
                 base_url=settings.GITHUB_BASE_URL,
                 token=settings.GITHUB_TOKEN or None,
                 timeout_segundos=settings.GITHUB_TIMEOUT_SEGUNDOS,
+                max_paginas=settings.OWNERSHIP_MAX_PAGINAS_GITHUB,
+                janela_dias=settings.OWNERSHIP_JANELA_DIAS,
             )
         elif provedor_tipo == "fake":
             self.provedor_historico = ProvedorHistoricoCommitsFake()
@@ -101,7 +104,6 @@ class CompositionRoot:
             auditoria=self.auditoria_service,
         )
         self.notificacao_service = NotificacaoServiceImpl(self.repositorio_notificacoes)
-        # AprovacaoService recebe NotificacaoService — eventos viram notificacoes para os seguidores.
         self.aprovacao_service = AprovacaoServiceImpl(
             repositorio_documentos=self.repositorio_documentos,
             repositorio_aprovacoes=self.repositorio_aprovacoes,
@@ -109,6 +111,22 @@ class CompositionRoot:
             auditoria=self.auditoria_service,
             notificacao_service=self.notificacao_service,
         )
+
+        # --- Job diario de ownership (PU-02) ---
+        # Scheduler eh criado mas nao iniciado aqui — main.py controla via lifespan/startup.
+        self.scheduler_ownership = SchedulerDiario(
+            tarefa=lambda: self.ownership_service.refrescar_todos(),
+            intervalo_segundos=max(60, settings.OWNERSHIP_REFRESH_INTERVALO_HORAS * 3600),
+            nome="ownership-refresh-diario",
+        )
+
+    def iniciar_jobs_em_background(self) -> None:
+        """Liga o scheduler diario se habilitado por config. Chamado no startup do FastAPI."""
+        if settings.OWNERSHIP_SCHEDULER_HABILITADO:
+            self.scheduler_ownership.iniciar(executar_imediatamente=False)
+
+    def parar_jobs_em_background(self) -> None:
+        self.scheduler_ownership.parar()
 
     def get_auditoria_service(self) -> AuditoriaServiceImpl:
         return self.auditoria_service
