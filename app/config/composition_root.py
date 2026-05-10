@@ -27,12 +27,18 @@ from app.adapters.driven.persistence.repositorio_aprovacoes_sqlite import (
 from app.adapters.driven.persistence.repositorio_notificacoes_sqlite import (
     RepositorioNotificacoesSQLite,
 )
+from app.adapters.driven.persistence.repositorio_ownership_documentos_sqlite import (
+    RepositorioOwnershipDocumentosSQLite,
+)
 from app.adapters.driven.scheduler.scheduler_diario import SchedulerDiario
 from app.application.services.aprovacao_service_impl import AprovacaoServiceImpl
 from app.application.services.auditoria_service_impl import AuditoriaServiceImpl
 from app.application.services.notificacao_service_impl import NotificacaoServiceImpl
 from app.application.services.ownership_service_impl import OwnershipServiceImpl
 from app.application.services.saude_service_impl import SaudeServiceImpl
+from app.application.services.sugestao_ownership_service_impl import (
+    SugestaoOwnershipServiceImpl,
+)
 from app.application.services.template_aprovacao_service_impl import (
     TemplateAprovacaoServiceImpl,
 )
@@ -91,6 +97,11 @@ class CompositionRoot:
             settings.NOTIFICACOES_SQLITE_PATH
         )
 
+        # --- Ownership de documentos (PU-03) ---
+        self.repositorio_ownership_documentos = RepositorioOwnershipDocumentosSQLite(
+            settings.OWNERSHIP_DOCUMENTOS_SQLITE_PATH
+        )
+
         # --- Services ---
         self.auditoria_service = AuditoriaServiceImpl(self.repositorio_auditoria)
         self.saude_service = SaudeServiceImpl(self.repositorio_auditoria)
@@ -110,6 +121,11 @@ class CompositionRoot:
             repositorio_templates=self.repositorio_templates_aprovacao,
             auditoria=self.auditoria_service,
             notificacao_service=self.notificacao_service,
+        )
+        self.sugestao_ownership_service = SugestaoOwnershipServiceImpl(
+            repositorio_documentos=self.repositorio_documentos,
+            repositorio_ownership=self.repositorio_ownership_documentos,
+            auditoria_service=self.auditoria_service,
         )
 
         # --- Job diario de ownership (PU-02) ---
@@ -145,6 +161,9 @@ class CompositionRoot:
 
     def get_notificacao_service(self) -> NotificacaoServiceImpl:
         return self.notificacao_service
+
+    def get_sugestao_ownership_service(self) -> SugestaoOwnershipServiceImpl:
+        return self.sugestao_ownership_service
 
 
 _singleton: CompositionRoot | None = None

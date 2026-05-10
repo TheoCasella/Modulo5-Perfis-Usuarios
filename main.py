@@ -9,6 +9,7 @@ from app.adapters.driving.http import (
     notificacao_routes,
     ownership_routes,
     saude_routes,
+    sugestao_ownership_routes,
     template_aprovacao_routes,
 )
 from app.config.composition_root import get_root
@@ -38,6 +39,7 @@ app.include_router(ownership_routes.router)
 app.include_router(template_aprovacao_routes.router)
 app.include_router(aprovacao_routes.router)
 app.include_router(notificacao_routes.router)
+app.include_router(sugestao_ownership_routes.router)
 
 
 @app.get("/")
