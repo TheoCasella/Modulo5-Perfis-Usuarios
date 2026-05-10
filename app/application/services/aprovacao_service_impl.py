@@ -1,10 +1,11 @@
 # Implementacao do AprovacaoService (US PU-05).
 # Faz snapshot do template ativo no submeter, processa decisoes respeitando o fluxo
 # e gera RegistroAuditoria via PU-06 a cada acao.
+# Integracao com PU-07: cada evento dispara notificar_evento(...) para os seguidores.
 
 from dataclasses import replace
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 from app.application.ports.driven.repositorio_aprovacoes import RepositorioAprovacoes
 from app.application.ports.driven.repositorio_documentos import RepositorioDocumentos
@@ -15,12 +16,14 @@ from app.application.ports.driving.aprovacao_service import (
     AprovacaoService,
     StatusDocumento,
 )
+from app.application.ports.driving.notificacao_service import NotificacaoService
 from app.domain.entidades.aprovacao import (
     Aprovacao,
     Decisao,
     DocumentoSubmetido,
     StatusAprovacao,
 )
+from app.domain.entidades.notificacao import TipoEventoNotificacao
 from app.domain.entidades.registro_auditoria import TipoAcao
 from app.domain.entidades.template_aprovacao import NomePapel
 from app.domain.excecoes import (
@@ -44,11 +47,13 @@ class AprovacaoServiceImpl(AprovacaoService):
         repositorio_aprovacoes: RepositorioAprovacoes,
         repositorio_templates: RepositorioTemplatesAprovacao,
         auditoria,
+        notificacao_service: Optional[NotificacaoService] = None,
     ):
         self._docs = repositorio_documentos
         self._decisoes = repositorio_aprovacoes
         self._templates = repositorio_templates
         self._auditoria = auditoria
+        self._notificacao = notificacao_service  # opcional — None desliga PU-07
 
     # ------------------------------------------------------------------
     # Mutacoes
@@ -87,6 +92,12 @@ class AprovacaoServiceImpl(AprovacaoService):
         self._auditar(autor_id, TipoAcao.CRIOU, documento, detalhes={
             "titulo": titulo, "template_id": template.id, "fluxo": template.fluxo.value,
         })
+        self._notificar(
+            documento, TipoEventoNotificacao.DOCUMENTO_SUBMETIDO,
+            f"Documento submetido: {titulo}",
+            f"O documento {documento.id} foi submetido para aprovacao por {autor_id}.",
+            ator=autor_id,
+        )
         return documento
 
     def aprovar(
@@ -130,6 +141,12 @@ class AprovacaoServiceImpl(AprovacaoService):
         )
         self._docs.salvar(atualizado)
         self._auditar(autor_id, TipoAcao.EXCLUIU, atualizado, detalhes={"motivo": motivo})
+        self._notificar(
+            atualizado, TipoEventoNotificacao.DOCUMENTO_CANCELADO,
+            f"Documento cancelado: {atualizado.titulo}",
+            f"O autor cancelou o documento {atualizado.id}. Motivo: {motivo or 'nao informado'}.",
+            ator=autor_id,
+        )
         return atualizado
 
     # ------------------------------------------------------------------
@@ -175,14 +192,11 @@ class AprovacaoServiceImpl(AprovacaoService):
 
         decisoes_existentes = self._decisoes.listar_por_documento(documento_id)
 
-        # Mesmo papel ja decidiu? Bloqueia (exceto se rejeitou anteriormente — mas isso ja
-        # finaliza o doc, entao status PENDENTE garante que ninguem decidiu rejeitando).
         if any(d.papel == papel for d in decisoes_existentes):
             raise AprovacaoDuplicadaError(
                 f"Papel '{papel.value}' ja decidiu sobre este documento."
             )
 
-        # Fluxo SEQUENCIAL: so o proximo da fila pode decidir.
         if papel not in documento.papeis_pendentes(decisoes_existentes):
             raise AprovacaoForaDeOrdemError(
                 f"Papel '{papel.value}' nao esta pendente agora (fluxo {documento.fluxo.value})."
@@ -197,24 +211,41 @@ class AprovacaoServiceImpl(AprovacaoService):
         )
         self._decisoes.registrar(aprovacao)
 
-        # Recalcula status do doc
         novas_decisoes = decisoes_existentes + [aprovacao]
         novo_status = documento.calcular_status(novas_decisoes)
+        documento_apos = documento
         if novo_status != documento.status:
-            atualizado = replace(
+            documento_apos = replace(
                 documento,
                 status=novo_status,
                 finalizado_em=datetime.now(timezone.utc) if novo_status != StatusAprovacao.PENDENTE else None,
             )
-            self._docs.salvar(atualizado)
+            self._docs.salvar(documento_apos)
 
-        # Auditoria da decisao
         acao = TipoAcao.APROVOU if decisao == Decisao.APROVADO else TipoAcao.REJEITOU
         self._auditar(aprovador_id, acao, documento, detalhes={
             "papel": papel.value,
             "comentario": comentario,
             "novo_status": novo_status.value,
         })
+
+        # Notifica seguidores. Se o documento ja chegou ao status terminal, eh evento APROVADO/REJEITADO;
+        # caso contrario, mantemos o tipo de acao individual.
+        if decisao == Decisao.REJEITADO:
+            tipo_evt = TipoEventoNotificacao.DOCUMENTO_REJEITADO
+            titulo_msg = f"Documento rejeitado: {documento_apos.titulo}"
+        elif novo_status == StatusAprovacao.APROVADO:
+            tipo_evt = TipoEventoNotificacao.DOCUMENTO_APROVADO
+            titulo_msg = f"Documento aprovado: {documento_apos.titulo}"
+        else:
+            tipo_evt = TipoEventoNotificacao.OUTRO
+            titulo_msg = f"Aprovacao parcial em {documento_apos.titulo}"
+        self._notificar(
+            documento_apos, tipo_evt, titulo_msg,
+            f"{aprovador_id} ({papel.value}) {decisao.value} o documento.",
+            ator=aprovador_id,
+            extras={"comentario": comentario, "papel": papel.value},
+        )
         return aprovacao
 
     def _exigir_documento(self, documento_id: str) -> DocumentoSubmetido:
@@ -244,3 +275,36 @@ class AprovacaoServiceImpl(AprovacaoService):
                 **detalhes,
             },
         )
+
+    def _notificar(
+        self,
+        documento: DocumentoSubmetido,
+        tipo: TipoEventoNotificacao,
+        titulo: str,
+        descricao: str,
+        ator: str,
+        extras: Optional[dict] = None,
+    ) -> None:
+        if self._notificacao is None:
+            return
+        try:
+            self._notificacao.notificar_evento(
+                documento_id=documento.id,
+                tipo=tipo,
+                titulo=titulo,
+                descricao=descricao,
+                detalhes={
+                    "projeto_id": documento.projeto_id,
+                    "tipo_documento": documento.tipo_documento,
+                    "ator": ator,
+                    **(extras or {}),
+                },
+                excluir_usuario=ator,
+            )
+        except Exception:
+            # Notificar nao pode quebrar o fluxo de aprovacao. Logar e seguir.
+            import logging
+            logging.getLogger("perfis.aprovacao").warning(
+                "Falha ao notificar evento %s do documento %s", tipo.value, documento.id,
+                exc_info=True,
+            )
